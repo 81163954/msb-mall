@@ -9,6 +9,7 @@ import com.msb.mall.product.entity.CategoryEntity;
 import com.msb.mall.product.service.AttrAttrgroupRelationService;
 import com.msb.mall.product.service.AttrGroupService;
 import com.msb.mall.product.service.CategoryService;
+import com.msb.mall.product.vo.AttrGroupRelationVO;
 import com.msb.mall.product.vo.AttrResponseVO;
 import com.msb.mall.product.vo.AttrVO;
 import org.springframework.beans.BeanUtils;
@@ -218,6 +219,23 @@ public class AttrServiceImpl extends ServiceImpl<AttrDao, AttrEntity> implements
                 .filter(entity->entity!=null)
                 .collect(Collectors.toList());
         return attrEntities;
+    }
+
+    /**
+     * 接触属性组和基本属性的关联关系
+     *  就是删除属性组和属性关联表中的记录
+     * @param vos
+     */
+    @Override
+    public void deleteRelation(AttrGroupRelationVO[] vos) {
+        //将接受的数组转化成 entity list
+        List<AttrAttrgroupRelationEntity> list = Arrays.asList(vos).stream().map(item -> {
+            AttrAttrgroupRelationEntity entity = new AttrAttrgroupRelationEntity();
+            BeanUtils.copyProperties(item, entity);
+            return entity;
+        }).collect(Collectors.toList());
+        //批量删除属性属性组关联记录
+        attrAttrgroupRelationDao.removeBatchRelation(list);
     }
 
 
