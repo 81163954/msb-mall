@@ -30,6 +30,14 @@ public class SpuBoundsController {
     @Autowired
     private SpuBoundsService spuBoundsService;
 
+
+    @RequestMapping("/saveSpuBounds")
+    //@RequiresPermissions("coupon:spubounds:save")
+    public R saveSpuBounds(@RequestBody SpuBoundsEntity spuBounds){
+        spuBoundsService.save(spuBounds);
+        return R.ok();
+    }
+
     /**
      * 列表
      */

@@ -3,6 +3,7 @@ package com.msb.mall.product.service.impl;
 import com.baomidou.mybatisplus.core.conditions.update.UpdateWrapper;
 import com.msb.mall.common.constant.ProductConstant;
 import com.msb.mall.product.dao.AttrAttrgroupRelationDao;
+import com.msb.mall.product.dao.AttrGroupDao;
 import com.msb.mall.product.entity.AttrAttrgroupRelationEntity;
 import com.msb.mall.product.entity.AttrGroupEntity;
 import com.msb.mall.product.entity.CategoryEntity;
@@ -20,6 +21,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
@@ -48,6 +50,9 @@ public class AttrServiceImpl extends ServiceImpl<AttrDao, AttrEntity> implements
 
     @Autowired
     private AttrGroupService attrGroupService;
+
+    @Autowired
+    private AttrGroupDao attrGroupDao;
 
     @Override
     public PageUtils queryPage(Map<String, Object> params) {
@@ -236,6 +241,46 @@ public class AttrServiceImpl extends ServiceImpl<AttrDao, AttrEntity> implements
         }).collect(Collectors.toList());
         //批量删除属性属性组关联记录
         attrAttrgroupRelationDao.removeBatchRelation(list);
+    }
+
+    /**
+     * 根据 AttrgroupId 查询出所在分类id
+     * 再查该分类下所有属性中 未关联到属性组中的属性
+     * @param params
+     * @param attrgroupId
+     * @return
+     */
+    @Override
+    public PageUtils getNoAttrRelation(Map<String, Object> params, Long attrgroupId) {
+        AttrGroupEntity attrGroupEntity = attrGroupService.getById(attrgroupId);
+        Long catelogId = attrGroupEntity.getCatelogId();
+
+        List<AttrGroupEntity> group = attrGroupDao.selectList(new QueryWrapper<AttrGroupEntity>().eq("catelog_id", catelogId));
+        List<Long> groupIds = group.stream().map(entity -> entity.getAttrGroupId()).collect(Collectors.toList());
+        //根据所有属性组id查询所有关联了的属性
+        List<AttrAttrgroupRelationEntity> relationEntities = attrAttrgroupRelationDao.selectList(
+                new QueryWrapper<AttrAttrgroupRelationEntity>().in("attr_group_id", groupIds));
+        List<Long> attrIds = relationEntities.stream().map(entity -> entity.getAttrId()).collect(Collectors.toList());
+        //查询分类下所有的属性，并排除已关联属性组的属性
+        QueryWrapper<AttrEntity> wrapper = new QueryWrapper<AttrEntity>().eq("catelog_id", catelogId)
+                .eq("attr_type", ProductConstant.AttrEnum.ATTR_TYPE_BASE.getCode());
+        //添加要排除的属性
+        if(attrIds != null && attrIds.size()>0){
+            wrapper.notIn("attr_id",attrIds);
+        }
+        //根据key查询
+        String key = (String) params.get("key");
+        if(!StringUtils.isEmpty(key)){
+            wrapper.and(w->{
+                w.eq("attr_id",key).or().like("attr_name",key);
+            });
+        }
+
+        IPage<AttrEntity> page = this.page(
+                new Query<AttrEntity>().getPage(params),
+                wrapper
+        );
+        return new PageUtils(page);
     }
 
 

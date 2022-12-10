@@ -1,7 +1,7 @@
 spring:
   datasource:
     username: root
-    password: root
+    password: a4345198@
     url: jdbc:mysql://120.48.44.19:3306/mall-pms
     driver-class-name: com.mysql.cj.jdbc.Driver
 
@@ -17,6 +17,9 @@ spring:
 
   application:
     name: mall-product
+  # 设置服务器相应给客户端的日期时间格式
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
 
 mybatis-plus:
   mapper-locations: classpath*:/mapper/**/*.xml
