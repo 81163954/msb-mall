@@ -94,6 +94,7 @@ public class PurchaseServiceImpl extends ServiceImpl<PurchaseDao, PurchaseEntity
             detailEntity.setStatus(WareConstant.PurchaseDetailStatusEnum.ASSIGED.getCode());
             return detailEntity;
         }).filter(id ->{
+            //过滤detail状态，已经进行采购的不要
             PurchaseDetailEntity item = detailService.getById(id);
             if(item.getStatus() == WareConstant.PurchaseDetailStatusEnum.CREATED.getCode() ||
                     item.getStatus() == WareConstant.PurchaseDetailStatusEnum.ASSIGED.getCode()){
@@ -110,6 +111,49 @@ public class PurchaseServiceImpl extends ServiceImpl<PurchaseDao, PurchaseEntity
         entity.setUpdateTime(new Date());
         this.updateById(entity);
         return 1;
+    }
+
+    /**
+     * 采购人领取采购单
+     * 外部API，对其他app提供
+     * @param ids
+     */
+    @Transactional
+    @Override
+    public void received(List<Long> ids) {
+        // 1.领取的采购单的状态只能是新建或者已分配的采购单 其他的是不能领取的
+        List<PurchaseEntity> list = ids.stream().map(id -> {
+            return this.getById(id);
+        }).filter(item -> {
+
+            if (item.getStatus() == WareConstant.PurchaseStatusEnum.CREATED.getCode() ||
+                    item.getStatus() == WareConstant.PurchaseStatusEnum.ASSIGED.getCode()) {
+
+                return true;
+            }
+            return false;
+        }).map(item->{
+            item.setUpdateTime(new Date()); // 设置更新时间
+            // 更新采购单的状态为 已领取
+            item.setStatus(WareConstant.PurchaseStatusEnum.RECEIVE.getCode());
+            return item;
+        }).collect(Collectors.toList());
+        // 2.更新采购单的状态为 已领取
+        this.updateBatchById(list);
+        // 3.更新采购项的状态为 正在采购
+
+        for (Long id : ids) {
+            // 根据采购单id 找到对应的采购项对象
+            List<PurchaseDetailEntity> detailEntities = detailService.listDetailByPurchaseId(id);
+            List<PurchaseDetailEntity> collect = detailEntities.stream().map(item -> {
+                PurchaseDetailEntity entity = new PurchaseDetailEntity();
+                entity.setId(item.getId());
+                entity.setStatus(WareConstant.PurchaseDetailStatusEnum.BUYING.getCode());
+                return entity;
+            }).collect(Collectors.toList());
+            // 批量更新采购项
+            detailService.updateBatchById(collect);
+        }
     }
 
 }

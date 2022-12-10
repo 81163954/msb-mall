@@ -9,15 +9,14 @@
 
 #### 安装教程
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+
 
 #### 使用说明
 
-1.  xxxx
-2.  xxxx
-3.  xxxx
+外部API（mall-ware）
+- 领取采购单
+ /ware/purchase/receive  RequestBody:\[purchaseId...\]
+- 完成采购单
 
 #### 参与贡献
 

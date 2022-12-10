@@ -1,15 +1,12 @@
 package com.msb.mall.ware.controller;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 import com.msb.mall.ware.vo.MergeVO;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.msb.mall.ware.entity.PurchaseEntity;
 import com.msb.mall.ware.service.PurchaseService;
@@ -32,12 +29,28 @@ public class PurchaseController {
     private PurchaseService purchaseService;
 
 
+    // /ware/purchase/receive
+
+    /**
+     * 领取采购单
+     * [2,3,4]
+     * @return
+     */
+    @PostMapping("/receive")
+    public R receive(@RequestBody List<Long> ids){
+        purchaseService.received(ids);
+        return R.ok();
+    }
+
+
+
     @RequestMapping("/merge")
     public R merge(@RequestBody MergeVO mergeVO){
         Integer flag = purchaseService.merge(mergeVO);
-
+        if(flag==-1){
+            return R.error("合并失败...该采购单不是新建或已分配，不能合并");
+        }
         return R.ok();
-
     }
 
     /**

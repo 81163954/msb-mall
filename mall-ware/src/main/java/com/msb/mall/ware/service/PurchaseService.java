@@ -6,6 +6,7 @@ import com.msb.mall.ware.entity.PurchaseEntity;
 import com.msb.mall.ware.vo.MergeVO;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -23,5 +24,8 @@ public interface PurchaseService extends IService<PurchaseEntity> {
 
     @Transactional
     Integer merge(MergeVO mergeVO);
+
+
+    void received(List<Long> ids);
 }
 
